@@ -1,0 +1,49 @@
+function! s:sopsRead()
+        let s:path = expand('%:p')
+
+        let l:tmpf = substitute(system("mktemp"), '\n$', '', '') . ".enc.yaml"
+
+        call system("cp " . s:path . " " . l:tmpf)
+        let l:res = substitute(system("sops -i -d " . l:tmpf . " >/dev/null 2>&1; echo $? "), '\n$', '', '')
+        if l:res == "0"
+                let b:sopsHash = system("md5sum " . l:tmpf . " | cut -f1 -d' ' ")
+
+                let l:content = join(readfile(l:tmpf),"\n")
+                call delete(l:tmpf)
+
+                execute "normal! ggdG"
+                put =l:content
+                execute "normal! ggdd"
+                setlocal statusline=SOPS\ ENCRYPTED\ %<%f\ %h%m%r%=%{strftime('%c')}
+                set laststatus=2
+        else
+                echo "Can not open sops file"
+        endif
+endfunction
+
+function! s:sopsWrite()
+
+        let l:tmpf = substitute(system("mktemp"), '\n$', '', '') . ".enc.yaml"
+        let l:path = expand('%:p')
+        let l:content = getline(0,line('$'))
+        call writefile(l:content, l:tmpf )
+        let b:sopsHashNew = system("md5sum " . l:tmpf . " | cut -f1 -d' ' ")
+        if b:sopsHashNew != b:sopsHash
+                let l:res = substitute(system("sops -i -e " . l:tmpf . " >/dev/null 2>&1; echo $? "), '\n$', '', '')
+                if l:res == "0"
+                        let l:out = system("cp " . l:tmpf . " " . l:path)
+                        let b:sopsHash = b:sopsHashNew
+                        set nomodified
+                else
+                        echo "Can not save sops file"
+                endif
+        else
+                echo "Will save nothing"
+        endif
+endfunction
+
+:autocmd BufRead *.enc.yml call s:sopsRead()
+:autocmd BufRead *.enc.yaml call s:sopsRead()
+
+:autocmd BufWriteCmd *.enc.yml call s:sopsWrite()
+:autocmd BufWriteCmd *.enc.yaml call s:sopsWrite()
