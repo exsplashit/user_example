@@ -21,3 +21,16 @@ end
 require("astronvim.utils").conditional_func(astronvim.user_opts("polish", nil, false), true)
 
 vim.cmd("source ~/.config/nvim/sops")
+-- vim.cmd("source ~/.config/nvim/vault")
+
+vim.cmd([[
+  augroup terraformFileType
+    autocmd!
+    autocmd BufNewFile,BufRead *.tf set filetype=terraform
+  augroup END
+]])
+
+-- Add an autocmd to detect and set the filetype for ansible files
+vim.cmd[[
+  autocmd BufRead,BufNewFile **/ansible*/* set filetype=yaml.ansible
+]]
