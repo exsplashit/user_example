@@ -34,3 +34,5 @@ vim.cmd([[
 vim.cmd[[
   autocmd BufRead,BufNewFile **/ansible*/* set filetype=yaml.ansible
 ]]
+
+vim.g.tabby_server_url = "https://tabby.exsplash.it"
